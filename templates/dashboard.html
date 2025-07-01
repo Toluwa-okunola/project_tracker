@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /> <!-- Responsive meta tag -->
+  <title>Dashboard – Academic Planner</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <style>
+    /* Card styling */
+    .project-card {
+      box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+      border-radius: 8px; /* slight rounding */
+      padding: 16px;
+      transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease, background-color 0.3s ease;
+      margin-bottom: 1.5rem;
+      background: #fff;
+      border: 2px solid transparent;
+      cursor: pointer;
+      color: inherit; /* so text color inherits from container */
+      text-decoration: none;
+      display: block; /* so entire card is clickable */
+    }
+    .project-card:hover, .project-card:focus {
+      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+      transform: translateY(-3px);
+      border-color: #0d6efd; /* Bootstrap primary blue highlight */
+      background-color: #f8f9fa; /* light gray background on hover */
+      outline: none;
+      text-decoration: none;
+      color: inherit;
+    }
+    /* Status border colors */
+    .status-planning {
+      border-color: #ffc107 !important; /* Bootstrap warning yellow */
+      color: #856404; /* darker yellow for text */
+    }
+    .status-in-progress {
+      border-color: #0dcaf0 !important; /* Bootstrap info cyan */
+      color: #055160; /* darker cyan */
+    }
+    .status-completed {
+      border-color: #198754 !important; /* Bootstrap success green */
+      color: #155724; /* darker green */
+    }
+
+    /* Description scroll */
+    .desc-scroll { max-height: 90px; overflow-y: auto; }
+
+    /* Avatar circles */
+    .avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: #0d6efd; color: #fff; font-size: .85rem;
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-right: 4px; cursor: default;
+      user-select: none;
+      transition: background-color 0.3s ease;
+    }
+    .avatar:hover {
+      background-color: #084298;
+    }
+
+  </style>
+</head>
+<body>
+<div class="container py-4">
+
+  <!-- Flash messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="mt-3">
+      {% for category,message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Welcome, {{ current_user.firstname }}!</h2>
+    <small class="text-muted">Your dashboard overview</small>
+    <div class="btn-group">
+      <a href="{{ url_for('create_project') }}" class="btn btn-outline-primary">+ New Project</a>
+      <!-- Trigger button -->
+<button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#newMeetingModal">
+  + New Meeting
+</button>
+  <a href="{{ url_for('all_meetings') }}" class="btn btn-outline-primary">📅 View All Meetings</a>
+      <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Logout</a>
+      <!-- Modal -->
+<div class="modal fade" id="newMeetingModal" tabindex="-1" aria-labelledby="newMeetingModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="GET" action="{{ url_for('select_project_for_meeting') }}">
+        <div class="modal-header">
+          <h5 class="modal-title" id="newMeetingModalLabel">Select Project</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <select name="project_id" class="form-select" required>
+            <option value="" disabled selected>Select a project...</option>
+            {% for project in owned_projects + shared_projects %}
+              <option value="{{ project.id }}">{{ project.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Proceed</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#owned" type="button">My Projects</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#shared" type="button">Shared With Me</button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <!-- ===== OWNED ===== -->
+    <div class="tab-pane fade show active" id="owned" role="tabpanel">
+      {% if owned_projects %}
+      <div class="row">
+        {% for project in owned_projects %}
+        <div class="col-md-6 col-lg-4 mb-3">
+          <a href="{{ url_for('project_detail', project_id=project.id) }}"
+             class="project-card
+             {% if project.status == 'Planning' %} status-planning
+             {% elif project.status == 'In Progress' %} status-in-progress
+             {% elif project.status == 'Completed' %} status-completed
+             {% else %} border-info
+             {% endif %}">
+            <h5 class="fw-semibold">{{ project.title }}</h5>
+
+            <div class="desc-scroll small text-muted mb-2">
+              {{ project.description or 'No description yet.' }}
+            </div>
+
+            <small class="d-block mb-1">
+              <strong>Status:</strong>
+              {% if project.status == 'Completed' %}
+                <span class="badge bg-success">Completed</span>
+              {% elif project.status == 'Planning' %}
+                <span class="badge bg-warning text-dark">Planning</span>
+              {% elif project.status == 'In Progress' %}
+                <span class="badge bg-info">In Progress</span>
+              {% else %}
+                <span class="badge bg-info">{{ project.status }}</span>
+              {% endif %}
+            </small>
+
+            <small class="text-muted d-block mb-2">
+              Start: {{ project.start_date.strftime('%Y-%m-%d') }}
+            </small>
+
+            <!-- Collaborators -->
+            <div class="mb-2 d-flex align-items-center flex-wrap gap-1">
+              {% for user in project.users %}
+                {% set assoc = project.user_associations | selectattr('user_id', 'equalto', user.id) | list | first %}
+                <div class="avatar" data-bs-toggle="tooltip" title="{{ user.firstname }} {{ user.lastname }} ({{ assoc.role }})">
+                  {{ user.firstname[0] }}{{ user.lastname[0] }}
+                </div>
+                <small class="text-muted me-3">{{ assoc.role }}</small>
+              {% endfor %}
+            </div>
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+        <p>No projects owned by you yet.</p>
+      {% endif %}
+    </div>
+
+    <!-- ===== SHARED ===== -->
+    <div class="tab-pane fade" id="shared" role="tabpanel">
+      {% if shared_projects %}
+      <div class="row">
+        {% for project in shared_projects %}
+        <div class="col-md-6 col-lg-4 mb-3">
+          <a href="{{ url_for('project_detail', project_id=project.id) }}" class="project-card border-secondary">
+            <h5 class="fw-semibold">{{ project.title }}</h5>
+
+            <div class="desc-scroll small text-muted mb-2">
+              {{ project.description or 'No description yet.' }}
+            </div>
+
+            <small class="d-block mb-1">
+              <strong>Status:</strong>
+              <span class="badge bg-secondary">{{ project.status }}</span>
+            </small>
+
+            <small class="text-muted d-block mb-2">
+              Start: {{ project.start_date.strftime('%Y-%m-%d') }}
+            </small>
+
+            <div class="mb-2 d-flex align-items-center flex-wrap gap-1">
+              {% for user in project.users %}
+                {% set assoc = project.user_associations | selectattr('user_id', 'equalto', user.id) | list | first %}
+                <div class="avatar" data-bs-toggle="tooltip" title="{{ user.firstname }} {{ user.lastname }} ({{ assoc.role }})">
+                  {{ user.firstname[0] }}{{ user.lastname[0] }}
+                </div>
+                <small class="text-muted me-3">{{ assoc.role }}</small>
+              {% endfor %}
+            </div>
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+        <p>No projects shared with you yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // tooltips
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el =>
+      new bootstrap.Tooltip(el));
+</script>
+
+</body>
+</html>

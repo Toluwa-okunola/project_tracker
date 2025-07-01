@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}All Meetings – Academic Planner{% endblock %}
+
+{% block content %}
+<h3 class="mb-3 text-primary">All Project Meetings</h3>
+
+{% if meetings %}
+<div class="row row-cols-1 row-cols-md-2 g-4">
+  {% for m in meetings %}
+  <div class="col">
+    <div class="card card-meeting p-3 h-100">
+      <h5 class="mb-1">{{ m.title }}</h5>
+      <p class="text-muted small mb-2">{{ m.project.title }}</p>
+
+      <p class="mb-0"><span class="badge bg-secondary">{{ m.date.strftime('%Y-%m-%d') }}</span></p>
+      <small class="d-block mb-2">👥 {{ m.participants }}</small>
+      <p class="small">{{ m.notes or 'No notes.' }}</p>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p>No meetings found.</p>
+{% endif %}
+{% endblock %}

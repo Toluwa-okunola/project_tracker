@@ -1,0 +1,21 @@
+<!-- partials/_invite_modal.html -->
+<div class="modal fade" id="inviteModal{{ project.id }}" tabindex="-1" aria-labelledby="inviteLabel{{ project.id }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="{{ url_for('invite_collaborators', project_id=project.id) }}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="inviteLabel{{ project.id }}">
+            Invite Collaborators to {{ project.title }}
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="email" name="email" class="form-control" placeholder="Collaborator Email" required>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Send Invite</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

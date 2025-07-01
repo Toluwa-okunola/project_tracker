@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}{{ project.title }} – Academic Planner{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary mb-3">&larr; Back to Dashboard</a>
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h2 class="fw-bold">{{ project.title }}</h2>
+  {% if current_user.id == project.user_id %}
+    <a href="{{ url_for('edit_project', project_id=project.id) }}" class="btn btn-outline-primary btn-sm">✏️ Edit Project</a>
+  {% endif %}
+</div>
+
+<p>
+  <strong>Status:</strong>
+  <span class="badge
+    {% if project.status == 'Completed' %}bg-success
+    {% elif project.status == 'Planning' %}bg-warning text-dark
+    {% else %}bg-info
+    {% endif %}
+  ">{{ project.status }}</span>
+  <span class="ms-3 text-muted">Start: {{ project.start_date.strftime('%Y-%m-%d') }}</span>
+</p>
+
+<p class="mb-4">{{ project.description or 'No description yet.' }}</p>
+
+<h4 class="mb-2">Collaborators</h4>
+{% if project.users %}
+  <ul class="list-group list-group-horizontal flex-wrap mb-4">
+    {% for user in project.users %}
+      <li class="list-group-item flex-fill text-center">
+        {% set assoc = project.user_associations | selectattr("user_id", "equalto", user.id) | list | first %}
+        {{ user.firstname }} {{ user.lastname }}
+        <br />
+        <small class="text-muted">({{ assoc.role }})</small>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No collaborators added.</p>
+{% endif %}
+
+<!-- Meetings Section -->
+<div class="mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h4>Meetings</h4>
+    <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addMeetingModal">+ Add Meeting</button>
+  </div>
+
+  {% if project.meetings %}
+    <ul class="list-group mb-3">
+      {% for meeting in project.meetings %}
+        <li class="list-group-item">
+          <strong>{{ meeting.title }}</strong> — {{ meeting.date.strftime('%Y-%m-%d') }}<br />
+          <small><strong>Participants:</strong> {{ meeting.participants }}</small><br />
+          <small><strong>Notes:</strong> {{ meeting.notes or 'No notes yet.' }}</small>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No meetings yet.</p>
+  {% endif %}
+</div>
+
+<!-- Publications Section -->
+<div class="mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h4>Publications</h4>
+    <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addPublicationModal">+ Add Publication</button>
+  </div>
+
+  {% if project.publications %}
+    <ul class="list-group">
+      {% for pub in project.publications %}
+        <li class="list-group-item">
+          {{ pub.title }} ({{ pub.journal }}) — <a href="{{ pub.link }}" target="_blank" rel="noopener noreferrer">Link</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No publications yet.</p>
+  {% endif %}
+</div>
+
+<!-- References Section -->
+<div class="mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h4>References</h4>
+    <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addReferenceModal">+ Add Reference</button>
+  </div>
+
+  {% if project.references %}
+    <ul class="list-group">
+      {% for ref in project.references %}
+        <li class="list-group-item">
+          {{ ref.description }} — <a href="{{ ref.link }}" target="_blank" rel="noopener noreferrer">Link</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No references yet.</p>
+  {% endif %}
+</div>
+
+<!-- Modals -->
+
+<!-- Add Meeting Modal -->
+<div class="modal fade" id="addMeetingModal" tabindex="-1" aria-labelledby="addMeetingLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="{{ url_for('add_meeting', project_id=project.id) }}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addMeetingLabel">Add New Meeting</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="title" class="form-label">Meeting Title</label>
+            <input type="text" class="form-control" id="title" name="title" required>
+          </div>
+          <div class="mb-3">
+            <label for="participants" class="form-label">Participants</label>
+            <input type="text" class="form-control" id="participants" name="participants" required>
+          </div>
+          <div class="mb-3">
+            <label for="notes" class="form-label">Notes</label>
+            <textarea class="form-control" id="notes" name="notes"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Add Meeting</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Publication Modal -->
+<div class="modal fade" id="addPublicationModal" tabindex="-1" aria-labelledby="addPublicationLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="{{ url_for('add_publication', project_id=project.id) }}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addPublicationLabel">Add New Publication</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="titlePub" class="form-label">Title</label>
+            <input type="text" class="form-control" id="titlePub" name="title" required>
+          </div>
+          <div class="mb-3">
+            <label for="journal" class="form-label">Journal</label>
+            <input type="text" class="form-control" id="journal" name="journal">
+          </div>
+          <div class="mb-3">
+            <label for="linkPub" class="form-label">Link</label>
+            <input type="url" class="form-control" id="linkPub" name="link">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Add Publication</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Reference Modal -->
+<div class="modal fade" id="addReferenceModal" tabindex="-1" aria-labelledby="addReferenceLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="{{ url_for('add_reference', project_id=project.id) }}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addReferenceLabel">Add New Reference</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="descRef" class="form-label">Description</label>
+            <textarea class="form-control" id="descRef" name="description" rows="3" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="linkRef" class="form-label">Link</label>
+            <input type="url" class="form-control" id="linkRef" name="link">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Add Reference</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Focus first input when meeting modal opens
+  const meetingModal = document.getElementById('addMeetingModal');
+  meetingModal.addEventListener('shown.bs.modal', function () {
+    meetingModal.querySelector('#title').focus();
+  });
+</script>
+{% endblock %}

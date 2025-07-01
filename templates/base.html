@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}Academic Planner{% endblock %}</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    :root{
+      --navy:       #1B3B6F;
+      --lightblue:  #E8F4FF;
+      --gold:       #F9BE02;
+    }
+    body            { background: var(--lightblue); }
+    .navbar         { background: var(--navy);      }
+    .project-card,
+    .card-meeting   { background:#fff;border:0;box-shadow:0 4px 10px rgba(0,0,0,.06);border-radius:12px; }
+    .border-accent  { border-left:6px solid var(--navy)!important; }
+    .status-badge   { background:var(--gold);color:#000;font-weight:600; }
+    .role-badge     { font-size:.7rem;background:var(--navy);color:#fff;padding:2px 6px;border-radius:4px; }
+    .avatar         { width:34px;height:34px;border-radius:50%;background:var(--navy);color:#fff;
+                      display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;margin-right:4px; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark mb-4">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="{{ url_for('dashboard') }}">Academic Planner</a>
+    <div class="d-flex gap-2">
+      <a class="btn btn-light btn-sm" href="{{ url_for('dashboard') }}">🏠 Dashboard</a>
+      <a class="btn btn-outline-light btn-sm" href="{{ url_for('logout') }}">Logout</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category,msg in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ msg }} <button class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

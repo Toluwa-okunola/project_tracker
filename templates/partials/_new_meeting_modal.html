@@ -1,0 +1,24 @@
+<!-- New Meeting Modal -->
+<div class="modal fade" id="newMeetingModal" tabindex="-1" aria-labelledby="newMeetingModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="GET" action="{{ url_for('select_project_for_meeting') }}">
+        <div class="modal-header">
+          <h5 class="modal-title" id="newMeetingModalLabel">Select Project</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <select name="project_id" class="form-select" required>
+            <option value="" disabled selected>Select a project...</option>
+            {% for project in owned_projects + shared_projects %}
+              <option value="{{ project.id }}">{{ project.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Proceed</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
